@@ -13,8 +13,7 @@
     comment = '(' (FWS? ccontent)* FWS? ')'
     ccontent = ctext | quoted-pair | comment
     ctext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021-\\u0027\\u002a-\\u005b\\u005d-\\u007f]+'
-    local-part = dot-atom | quoted-string | obs-local-part
-    dot-atom = CFWS? atext ('.' atext)* CFWS?
+    local-part = quoted-string | obs-local-part
     quoted-string = CFWS? '\"' (FWS? qcontent)* FWS? '\"' CFWS?
     qcontent = qtext | quoted-pair
     qtext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021\\u0023-\\u005b\\u005d-\\u007f]+'
@@ -135,7 +134,6 @@
                             :CFWS str
                             :comment (constantly "")
                             :word str
-                            :dot-atom str
                             :atom str
                             :atext str
                             :quoted-string unquote-string

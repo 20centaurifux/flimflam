@@ -1,4 +1,4 @@
-(ns flimfam.generators
+(ns flimflam.generators
   (:require [clojure.string :as str]
             [clojure.test.check.generators :as gen]
             [miner.strgen :as sg]))

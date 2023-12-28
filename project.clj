@@ -5,6 +5,7 @@
             :url "https://www.gnu.org/licenses/agpl-3.0"}
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [instaparse "1.4.12"]
+                 [org.clojure/core.match "1.0.1"]
                  [org.clojure/test.check "1.1.1"]
                  [com.velisco/strgen "0.2.5"]]
   :target-path "target/%s"

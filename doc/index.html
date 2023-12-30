@@ -2865,10 +2865,13 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>de.dixieflatline/flimfam -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/20centaurifux/flimfam">de.dixieflatline/flimfam</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Email address validation.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.11.1</td></tr><tr><td class="dep-name">instaparse</td><td class="dotted"><hr /></td><td class="dep-version">1.4.12</td></tr><tr><td class="dep-name">org.clojure/test.check</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr><tr><td class="dep-name">com.velisco/strgen</td><td class="dotted"><hr /></td><td class="dep-version">0.2.5</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#flimfam.core">flimfam.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#flimfam.core" name="flimfam.core"><h1 class="project-name">flimfam.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns flimfam.core
-  (:require [instaparse.core :as insta]))</pre></td></tr><tr><td class="docs">
+</script><title>de.dixieflatline/flimflam -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/20centaurifux/flimflam">de.dixieflatline/flimflam</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Email address validation.</p>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.11.1</td></tr><tr><td class="dep-name">instaparse</td><td class="dotted"><hr /></td><td class="dep-version">1.4.12</td></tr><tr><td class="dep-name">org.clojure/core.match</td><td class="dotted"><hr /></td><td class="dep-version">1.0.1</td></tr><tr><td class="dep-name">org.clojure/test.check</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr><tr><td class="dep-name">com.velisco/strgen</td><td class="dotted"><hr /></td><td class="dep-version">0.2.5</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#flimflam.core">flimflam.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#flimflam.core" name="flimflam.core"><h1 class="project-name">flimflam.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns flimflam.core
+  (:require [clojure.core.match :refer [match]]
+            [clojure.string :as str]
+            [instaparse.core :as insta]))</pre></td></tr><tr><td class="docs"><p> parser</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private parser
   (insta/parser
    &quot;address = local-part '@' domain
@@ -2877,8 +2880,7 @@ net.brehaut.ClojureTools = (function (SH) {
     comment = '(' (FWS? ccontent)* FWS? ')'
     ccontent = ctext | quoted-pair | comment
     ctext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021-\\u0027\\u002a-\\u005b\\u005d-\\u007f]+'
-    local-part = dot-atom | quoted-string | obs-local-part
-    dot-atom = CFWS? atext ('.' atext)* CFWS?
+    local-part = quoted-string | obs-local-part
     quoted-string = CFWS? '\&quot;' (FWS? qcontent)* FWS? '\&quot;' CFWS?
     qcontent = qtext | quoted-pair
     qtext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021\\u0023-\\u005b\\u005d-\\u007f]+'
@@ -2889,7 +2891,7 @@ net.brehaut.ClojureTools = (function (SH) {
     quoted-pair = #'\\u005c([\\u0000-\\u007f])'
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
-    fqdn = (label '.')+ label '.'?
+    fqdn = (label '.')+ (label '.'?)?
     label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
@@ -2952,31 +2954,164 @@ net.brehaut.ClojureTools = (function (SH) {
     v6104 = '::' hextet ':' octet '.' octet '.' octet '.' octet
     v6114 = hextet '::' octet '.' octet '.' octet '.' octet
     v6004 = '::' octet '.' octet '.' octet '.' octet
-    v6 = (v680 | v670 | v671 | v672 | v673 | v674 | v675 | v676 | v677
+    v6 = (v680
+          | v670 | v671 | v672 | v673 | v674 | v675 | v676 | v677
           | v660 | v661 | v662 | v663 | v664 | v665 | v666
           | v650 | v651 | v652 | v653 | v654 | v655
           | v640 | v641 | v642 | v643 | v644
           | v630 | v631 | v632 | v633
-          | v620 | v621 | v622 | v610 | v611
-          | v600 | v6604 | v6504 | v6514 | v6524 | v6534 | v6544 | v6554
+          | v620 | v621 | v622
+          | v610 | v611
+          | v600
+          | v6604
+          | v6504 | v6514 | v6524 | v6534 | v6544 | v6554
           | v6404 | v6414 | v6424 | v6434 | v6444
           | v6304 | v6314 | v6324 | v6334
           | v6204 | v6214 | v6224
-          | v6104 | v6114 | v6004)
+          | v6104 | v6114
+          | v6004)
     hextet = #'[a-fA-F0-9]{1,4}'
     octet = #'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'&quot;))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- unfold
-  [str]
-  (clojure.string/replace str #&quot;\r\n\s+&quot; &quot; &quot;))</pre></td></tr><tr><td class="docs"><p>Tests if address is an invalid email address.</p>
+  [s]
+  (str/replace s #&quot;\r\n\s+&quot; &quot; &quot;))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- trim-addr-spec-parts
+  [email]
+  (when-let [idx (str/last-index-of email &quot;@&quot;)]
+    (str (str/trim (subs email 0 idx))
+         (str/trim (subs email idx)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- parse
+  [email]
+  (some-&gt; email
+          unfold
+          trim-addr-spec-parts
+          parser))</pre></td></tr><tr><td class="docs"><p>validation</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns true <code>email</code> is an invalid email address.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn invalid?
-  [address]
-  (-&gt; address
-      unfold
-      parser
-      insta/failure?))</pre></td></tr><tr><td class="docs"><p>Tests if address is a valid email address</p>
+  [email]
+  (-&gt; email
+      parse
+      insta/failure?))</pre></td></tr><tr><td class="docs"><p>Returns true if <code>email</code> is a valid email address.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
-  [address]
-  (not (invalid? address)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_flimfam.core">flimfam.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  [email]
+  (not (invalid? email)))</pre></td></tr><tr><td class="docs"><p>normalization</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>normalize local-part</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- unquote-string
+  [&amp; r]
+  (let [s (apply str r)
+        l (str/index-of s &quot;\)
+        r (str/last-index-of s &quot;\)]
+    (str (subs s 0 l)
+         (subs s (inc l) r)
+         (subs s (inc r)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- local-part-&gt;str
+  [&amp; r]
+  (apply str (insta/transform {:obs-local-part str
+                               :FWS str
+                               :CFWS str
+                               :comment (constantly )
+                               :word str
+                               :atom str
+                               :atext str
+                               :quoted-string unquote-string
+                               :qcontent str
+                               :qtext str
+                               :quoted-pair #(subs % 1)}
+                              r)))</pre></td></tr><tr><td class="docs"><p>normalize domain</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- fqdn-&gt;str
+  [&amp; r]
+  (str/replace (apply str r) #&quot;\.$&quot; ))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- flat-ipv6-bytes-with-double-colon
+  [coll]
+  (filter #(or (int? %) (= &quot;::&quot; %))
+          (flatten coll)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- substitute-double-colon
+  [bytes]
+  (let [[l [_ &amp; r]] (split-with #(not= &quot;::&quot; %) bytes)]
+    (concat l (repeat (- 16 (count l) (count r)) 0) r)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- bytes-&gt;hextets
+  [bytes]
+  (map (fn [[msb lsb]]
+         (format &quot;%02x%02x&quot; msb lsb))
+       (partition 2 bytes)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- substitute-consecutive-zeros
+  [hextets]
+  (when-not (empty? hextets)
+    (let [[zeros r] (split-with #(= &quot;0000&quot; %) hextets)]
+      (cond
+        (empty? zeros) (cons (first r) (substitute-consecutive-zeros (next r)))
+        (and (&gt; (count zeros) 1)
+             (not-any? #(&gt; (count %) (count zeros))
+                       (filter #(apply = &quot;0000&quot; %)
+                               (partition-by #(= &quot;0000&quot; %) r)))) (cons &quot;::&quot; r)
+        :else (concat zeros (substitute-consecutive-zeros r))))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- interpose-hextets
+  [[hextet &amp; r]]
+  (when hextet
+    (if (or (nil? r)
+            (= hextet &quot;::&quot;)
+            (= (first r) &quot;::&quot;))
+      (cons hextet (interpose-hextets r))
+      (concat [hextet &quot;:&quot;] (interpose-hextets r)))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- ipv6-&gt;str
+  [[_ &amp; r]]
+  (-&gt;&gt; r
+       flat-ipv6-bytes-with-double-colon
+       substitute-double-colon
+       bytes-&gt;hextets
+       substitute-consecutive-zeros
+       interpose-hextets
+       str/join))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- hextet-&gt;bytes
+  [s]
+  (let [word (Integer/parseInt s 16)]
+    [(bit-shift-right word 8)
+     (bit-and word 255)]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- domain-&gt;str
+  [&amp; r]
+  (apply str (insta/transform {:CFWS (constantly )
+                               :FWS (constantly )
+                               :hostname str
+                               :fqdn fqdn-&gt;str
+                               :label str/lower-case
+                               :ip str
+                               :v4 str
+                               :v6 ipv6-&gt;str
+                               :octet parse-long
+                               :hextet hextet-&gt;bytes}
+                              r)))</pre></td></tr><tr><td class="docs"><p>normalize addr-spec</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- quote?
+  [s]
+  (some? (re-find #&quot;\p{C}|\s|\&quot;|@&quot; s)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- escape-char
+  [c]
+  (let [n (int c)]
+    (if (or (&lt; n 8)
+            (= n 11)
+            (&lt; 13 n 32)
+            (= n 127))
+      (format &quot;\\u%04x&quot; n)
+      (char-escape-string c))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- escape
+  [s]
+  (if (quote? s)
+    (str \&quot; (str/escape s escape-char) \&quot;)
+    s))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- address-&gt;str
+  [local-part _ domain]
+  (str (escape local-part) \@ domain))</pre></td></tr><tr><td class="docs"><p>Converts local-part and domain of <code>email</code> to a uniform format. local-part
+  may be quoted after conversion and may contain escaped characters.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn normalize
+  [email]
+  (let [result (parse email)]
+    (when-not (insta/failure? result)
+      (insta/transform {:address address-&gt;str
+                        :local-part local-part-&gt;str
+                        :domain domain-&gt;str}
+                       result))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_flimflam.core">flimflam.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack

@@ -1,6 +1,5 @@
 (ns flimflam.core
-  (:require [clojure.core.match :refer [match]]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [instaparse.core :as insta]))
 
 ;;;;  parser

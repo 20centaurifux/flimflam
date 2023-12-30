@@ -17,7 +17,7 @@
 
 (def dns-label (sg/string-generator "[a-zA-Z]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?"))
 
-(def fqdn (strjoin "." (gen/vector dns-label 2 4)))
+(def fqdn (strjoin "." (gen/vector dns-label 1 4)))
 
 (def ipv4 (strjoin "." (gen/vector (gen/choose 0 255) 4)))
 

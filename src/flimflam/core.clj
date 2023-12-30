@@ -24,7 +24,7 @@
     quoted-pair = #'\\u005c([\\u0000-\\u007f])'
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
-    fqdn = (label '.')+ label '.'?
+    fqdn = (label '.')+ (label '.'?)?
     label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
@@ -106,15 +106,40 @@
     hextet = #'[a-fA-F0-9]{1,4}'
     octet = #'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'"))
 
+(defn- unfold
+  [s]
+  (str/replace s #"\r\n\s+" " "))
+
+(defn- trim-addr-spec-parts
+  [email]
+  (when-let [idx (str/last-index-of email "@")]
+    (str (str/trim (subs email 0 idx))
+         (str/trim (subs email idx)))))
+
 (defn- parse
   [email]
+  (some-> email
+          unfold
+          trim-addr-spec-parts
+          parser))
+
+;;;; validation
+
+(defn invalid?
+  "Returns true `email` is an invalid email address."
+  [email]
   (-> email
-      (str/replace #"\r\n\s+" " ")
-      parser))
+      parse
+      insta/failure?))
+
+(defn valid?
+  "Returns true if `email` is a valid email address."
+  [email]
+  (not (invalid? email)))
 
 ;;;; normalization
 
-;;; local-part
+;;; normalize local-part
 
 (defn- unquote-string
   [& r]
@@ -125,24 +150,22 @@
          (subs s (inc l) r)
          (subs s (inc r)))))
 
-(defn local-part->str
-  [& subtree]
-  (str/trim
-   (apply str
-          (insta/transform {:obs-local-part str
-                            :FWS str
-                            :CFWS str
-                            :comment (constantly "")
-                            :word str
-                            :atom str
-                            :atext str
-                            :quoted-string unquote-string
-                            :qcontent str
-                            :qtext str
-                            :quoted-pair #(subs % 1)}
-                           subtree))))
+(defn- local-part->str
+  [& r]
+  (apply str (insta/transform {:obs-local-part str
+                               :FWS str
+                               :CFWS str
+                               :comment (constantly "")
+                               :word str
+                               :atom str
+                               :atext str
+                               :quoted-string unquote-string
+                               :qcontent str
+                               :qtext str
+                               :quoted-pair #(subs % 1)}
+                              r)))
 
-;;; domain
+;;; normalize domain
 
 (defn- fqdn->str
   [& r]
@@ -202,30 +225,48 @@
      (bit-and word 255)]))
 
 (defn- domain->str
-  [& subtree]
-  (str/trim
-   (apply str
-          (insta/transform {:CFWS (constantly "")
-                            :FWS (constantly "")
-                            :hostname str
-                            :fqdn fqdn->str
-                            :label str/lower-case
-                            :ip str
-                            :v4 str
-                            :v6 ipv6->str
-                            :octet parse-long
-                            :hextet hextet->bytes}
-                           subtree))))
+  [& r]
+  (apply str (insta/transform {:CFWS (constantly "")
+                               :FWS (constantly "")
+                               :hostname str
+                               :fqdn fqdn->str
+                               :label str/lower-case
+                               :ip str
+                               :v4 str
+                               :v6 ipv6->str
+                               :octet parse-long
+                               :hextet hextet->bytes}
+                              r)))
 
-;;; address
+;;; normalize addr-spec
+
+(defn- quote?
+  [s]
+  (some? (re-find #"\p{C}|\s|\"|@" s)))
+
+(defn- escape-char
+  [c]
+  (let [n (int c)]
+    (if (or (< n 8)
+            (= n 11)
+            (< 13 n 32)
+            (= n 127))
+      (format "\\u%04x" n)
+      (char-escape-string c))))
+
+(defn- escape
+  [s]
+  (if (quote? s)
+    (str \" (str/escape s escape-char) \")
+    s))
 
 (defn- address->str
   [local-part _ domain]
-  (when-not (str/blank? local-part)
-    (format "%s@%s" local-part domain)))
+  (str (escape local-part) \@ domain))
 
 (defn normalize
-  "Unquotes local-part of `email` and transforms domain to a uniform format."
+  "Converts local-part and domain of `email` to a uniform format. local-part
+  may be quoted after conversion and may contain escaped characters."
   [email]
   (let [result (parse email)]
     (when-not (insta/failure? result)
@@ -233,15 +274,3 @@
                         :local-part local-part->str
                         :domain domain->str}
                        result))))
-
-;;;; validation
-
-(defn invalid?
-  "Tests if `email` is an invalid email address."
-  [email]
-  (nil? (normalize email)))
-
-(defn valid?
-  "Tests if `email` is a valid email address"
-  [email]
-  (not (invalid? email)))

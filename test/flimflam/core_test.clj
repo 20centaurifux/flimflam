@@ -7,8 +7,7 @@
             [clojure.test.check.properties :as prop]
             [clojure.test.check.results :refer [pass?]]
             [flimflam.core :as ff]
-            [flimflam.generators :as ffg]
-            [instaparse.core :as insta]))
+            [flimflam.generators :as ffg]))
 
 (def ^:private num-tests 200)
 

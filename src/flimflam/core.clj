@@ -243,7 +243,8 @@
 
 (defn- quote?
   [s]
-  (re-find #"\p{C}|\s|\"|@" s))
+  (or (empty? s)
+      (re-find #"\p{C}|\s|\"|@" s)))
 
 (defn- escape-char
   [c]

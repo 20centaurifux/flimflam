@@ -151,18 +151,19 @@
 
 (defn- local-part->str
   [& r]
-  (apply str (insta/transform {:obs-local-part str
-                               :FWS str
-                               :CFWS str
-                               :comment (constantly "")
-                               :word str
-                               :atom str
-                               :atext str
-                               :quoted-string unquote-string
-                               :qcontent str
-                               :qtext str
-                               :quoted-pair #(subs % 1)}
-                              r)))
+  (->> r
+       (insta/transform {:obs-local-part str
+                         :FWS str
+                         :CFWS str
+                         :comment (constantly "")
+                         :word str
+                         :atom str
+                         :atext str
+                         :quoted-string unquote-string
+                         :qcontent str
+                         :qtext str
+                         :quoted-pair #(subs % 1)})
+       str/join))
 
 ;;; normalize domain
 
@@ -209,13 +210,13 @@
 
 (defn- ipv6->str
   [[_ & r]]
-  (->> r
-       flat-ipv6-bytes-with-double-colon
-       substitute-double-colon
-       bytes->hextets
-       substitute-consecutive-zeros
-       interpose-hextets
-       str/join))
+  (-> r
+      flat-ipv6-bytes-with-double-colon
+      substitute-double-colon
+      bytes->hextets
+      substitute-consecutive-zeros
+      interpose-hextets
+      str/join))
 
 (defn- hextet->bytes
   [s]
@@ -225,23 +226,24 @@
 
 (defn- domain->str
   [& r]
-  (apply str (insta/transform {:CFWS (constantly "")
-                               :FWS (constantly "")
-                               :hostname str
-                               :fqdn fqdn->str
-                               :label str/lower-case
-                               :ip str
-                               :v4 str
-                               :v6 ipv6->str
-                               :octet parse-long
-                               :hextet hextet->bytes}
-                              r)))
+  (->> r
+       (insta/transform {:CFWS (constantly "")
+                         :FWS (constantly "")
+                         :hostname str
+                         :fqdn fqdn->str
+                         :label str/lower-case
+                         :ip str
+                         :v4 str
+                         :v6 ipv6->str
+                         :octet parse-long
+                         :hextet hextet->bytes})
+       str/join))
 
 ;;; normalize addr-spec
 
 (defn- quote?
   [s]
-  (some? (re-find #"\p{C}|\s|\"|@" s)))
+  (re-find #"\p{C}|\s|\"|@" s))
 
 (defn- escape-char
   [c]

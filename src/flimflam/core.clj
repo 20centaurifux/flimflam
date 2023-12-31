@@ -266,8 +266,7 @@
   (str (escape local-part) \@ domain))
 
 (defn normalize
-  "Converts local-part and domain of `email` to a uniform format. local-part
-  may be quoted after conversion and may contain escaped characters."
+  "Converts `email` to a uniform format."
   [email]
   (let [result (parse email)]
     (when-not (insta/failure? result)

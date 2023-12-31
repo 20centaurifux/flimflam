@@ -2866,7 +2866,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>de.dixieflatline/flimflam -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="https://github.com/20centaurifux/flimflam">de.dixieflatline/flimflam</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Email address validation.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.11.1</td></tr><tr><td class="dep-name">instaparse</td><td class="dotted"><hr /></td><td class="dep-version">1.4.12</td></tr><tr><td class="dep-name">org.clojure/test.check</td><td class="dotted"><hr /></td><td class="dep-version">1.1.1</td></tr><tr><td class="dep-name">com.velisco/strgen</td><td class="dotted"><hr /></td><td class="dep-version">0.2.5</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#flimflam.core">flimflam.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#flimflam.core" name="flimflam.core"><h1 class="project-name">flimflam.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.11.1</td></tr><tr><td class="dep-name">instaparse</td><td class="dotted"><hr /></td><td class="dep-version">1.4.12</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#flimflam.core">flimflam.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#flimflam.core" name="flimflam.core"><h1 class="project-name">flimflam.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns flimflam.core
   (:require [clojure.string :as str]
             [instaparse.core :as insta]))</pre></td></tr><tr><td class="docs"><p> parser</p>
@@ -2890,7 +2890,7 @@ net.brehaut.ClojureTools = (function (SH) {
     quoted-pair = #'\\u005c([\\u0000-\\u007f])'
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
-    fqdn = (label '.')+ (label '.'?)?
+    fqdn = (label '.')+ label?
     label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
@@ -3006,18 +3006,19 @@ net.brehaut.ClojureTools = (function (SH) {
          (subs s (inc r)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- local-part-&gt;str
   [&amp; r]
-  (apply str (insta/transform {:obs-local-part str
-                               :FWS str
-                               :CFWS str
-                               :comment (constantly )
-                               :word str
-                               :atom str
-                               :atext str
-                               :quoted-string unquote-string
-                               :qcontent str
-                               :qtext str
-                               :quoted-pair #(subs % 1)}
-                              r)))</pre></td></tr><tr><td class="docs"><p>normalize domain</p>
+  (-&gt;&gt; r
+       (insta/transform {:obs-local-part str
+                         :FWS str
+                         :CFWS str
+                         :comment (constantly )
+                         :word str
+                         :atom str
+                         :atext str
+                         :quoted-string unquote-string
+                         :qcontent str
+                         :qtext str
+                         :quoted-pair #(subs % 1)})
+       str/join))</pre></td></tr><tr><td class="docs"><p>normalize domain</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- fqdn-&gt;str
   [&amp; r]
@@ -3056,13 +3057,13 @@ net.brehaut.ClojureTools = (function (SH) {
       (concat [hextet &quot;:&quot;] (interpose-hextets r)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- ipv6-&gt;str
   [[_ &amp; r]]
-  (-&gt;&gt; r
-       flat-ipv6-bytes-with-double-colon
-       substitute-double-colon
-       bytes-&gt;hextets
-       substitute-consecutive-zeros
-       interpose-hextets
-       str/join))</pre></td></tr><tr><td class="docs">
+  (-&gt; r
+      flat-ipv6-bytes-with-double-colon
+      substitute-double-colon
+      bytes-&gt;hextets
+      substitute-consecutive-zeros
+      interpose-hextets
+      str/join))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- hextet-&gt;bytes
   [s]
   (let [word (Integer/parseInt s 16)]
@@ -3070,21 +3071,22 @@ net.brehaut.ClojureTools = (function (SH) {
      (bit-and word 255)]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- domain-&gt;str
   [&amp; r]
-  (apply str (insta/transform {:CFWS (constantly )
-                               :FWS (constantly )
-                               :hostname str
-                               :fqdn fqdn-&gt;str
-                               :label str/lower-case
-                               :ip str
-                               :v4 str
-                               :v6 ipv6-&gt;str
-                               :octet parse-long
-                               :hextet hextet-&gt;bytes}
-                              r)))</pre></td></tr><tr><td class="docs"><p>normalize addr-spec</p>
+  (-&gt;&gt; r
+       (insta/transform {:CFWS (constantly )
+                         :FWS (constantly )
+                         :hostname str
+                         :fqdn fqdn-&gt;str
+                         :label str/lower-case
+                         :ip str
+                         :v4 str
+                         :v6 ipv6-&gt;str
+                         :octet parse-long
+                         :hextet hextet-&gt;bytes})
+       str/join))</pre></td></tr><tr><td class="docs"><p>normalize addr-spec</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- quote?
   [s]
-  (some? (re-find #&quot;\p{C}|\s|\&quot;|@&quot; s)))</pre></td></tr><tr><td class="docs">
+  (re-find #&quot;\p{C}|\s|\&quot;|@&quot; s))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- escape-char
   [c]
   (let [n (int c)]
@@ -3101,8 +3103,7 @@ net.brehaut.ClojureTools = (function (SH) {
     s))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- address-&gt;str
   [local-part _ domain]
-  (str (escape local-part) \@ domain))</pre></td></tr><tr><td class="docs"><p>Converts local-part and domain of <code>email</code> to a uniform format. local-part
-  may be quoted after conversion and may contain escaped characters.</p>
+  (str (escape local-part) \@ domain))</pre></td></tr><tr><td class="docs"><p>Converts <code>email</code> to a uniform format.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn normalize
   [email]
   (let [result (parse email)]

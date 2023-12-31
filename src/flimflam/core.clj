@@ -23,7 +23,7 @@
     quoted-pair = #'\\u005c([\\u0000-\\u007f])'
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
-    fqdn = (label '.')+ (label '.'?)?
+    fqdn = (label '.')+ label?
     label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet

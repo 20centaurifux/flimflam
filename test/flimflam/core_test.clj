@@ -11,7 +11,23 @@
 
 (def ^:private num-tests 200)
 
+;;;; blank email address
+
+(deftest blank-email-address-invalid?
+  (testing "empty"
+    (is (ff/invalid? "")))
+  (testing "whitespace"
+    (is (ff/invalid? "    "))))
+
 ;;;; local-part validation
+
+;;; blank
+
+(deftest $blank-at-example-org-invalid?
+  (testing "empty"
+    (is (ff/invalid? "@example.org")))
+  (testing "blank"
+    (is (ff/invalid? "   @example.org"))))
 
 ;;; dot-atom
 
@@ -84,6 +100,14 @@
     (ff/valid? (format "%s@example.org" obs-local-part))))
 
 ;;;; domain validation
+
+;;; blank
+
+(deftest $noreply-at-$blank-invalid?
+  (testing "empty"
+    (is (ff/invalid? "noreply@")))
+  (testing "whitespace"
+    (is (ff/invalid? "noreply@   "))))
 
 ;;; hostname
 

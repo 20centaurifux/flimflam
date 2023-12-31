@@ -127,9 +127,9 @@
 (defn invalid?
   "Returns true `email` is an invalid email address."
   [email]
-  (-> email
-      parse
-      insta/failure?))
+  (let [result (parse email)]
+    (or (nil? result)
+        (insta/failure? result))))
 
 (defn valid?
   "Returns true if `email` is a valid email address."
@@ -269,7 +269,7 @@
 (defn normalize
   "Converts `email` to a uniform format."
   [email]
-  (let [result (parse email)]
+  (when-let [result (parse email)]
     (when-not (insta/failure? result)
       (insta/transform {:address address->str
                         :local-part local-part->str

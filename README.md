@@ -68,6 +68,9 @@ user=> (ff/normalize "john.doe@ExAmPlE.")
 user=> (ff/normalize "john.\"doe\"@example.org")
 "john.doe@example.org"
 
+user=> (ff/normalize "\"\"@example.org")
+"\"\"@example.org"
+
 user=> (ff/normalize "john.\"\\\"Doe\\\"\"@example.org")
 "\"john.\\\"Doe\\\"\"@example.org"
 ```

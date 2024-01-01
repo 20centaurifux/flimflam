@@ -26,7 +26,7 @@
 (deftest $blank-at-example-org-invalid?
   (testing "empty"
     (is (ff/invalid? "@example.org")))
-  (testing "blank"
+  (testing "whitespace"
     (is (ff/invalid? "   @example.org"))))
 
 ;;; dot-atom
@@ -57,15 +57,6 @@
   (prop/for-all [quoted-string ffg/quoted-string]
     (ff/valid? (format "%s@example.org" quoted-string))))
 
-(defspec $quoted-string-at-example-org-valid? num-tests
-  (prop/for-all [quoted-string ffg/quoted-string]
-    (ff/valid? (format "%s@example.org" quoted-string))))
-
-(defspec $CFWS-$quoted-string-at-example-org-valid? num-tests
-  (prop/for-all [cfws ffg/CFWS
-                 quoted-string ffg/quoted-string]
-    (ff/valid? (format "%s%s@example.org" cfws quoted-string))))
-
 (defspec $CFWS-$quoted-string-at-example-org-valid? num-tests
   (prop/for-all [cfws ffg/CFWS
                  quoted-string ffg/quoted-string]
@@ -75,17 +66,6 @@
   (prop/for-all [quoted-string ffg/quoted-string
                  cfws ffg/CFWS]
     (ff/valid? (format "%s%s@example.org" quoted-string cfws))))
-
-(defspec $quoted-string-$CFWS-at-example-org-valid? num-tests
-  (prop/for-all [quoted-string ffg/quoted-string
-                 cfws ffg/CFWS]
-    (ff/valid? (format "%s%s@example.org" quoted-string cfws))))
-
-(defspec $CFWS-$quoted-string-$CFWS-at-example-org-valid? num-tests
-  (prop/for-all [cfws ffg/CFWS
-                 quoted-string ffg/quoted-string
-                 cfws' ffg/CFWS]
-    (ff/valid? (format "%s%s%s@example.org" cfws quoted-string cfws'))))
 
 (defspec $CFWS-$quoted-string-$CFWS-at-example-org-valid? num-tests
   (prop/for-all [cfws ffg/CFWS
@@ -104,6 +84,11 @@
   (prop/for-all [quoted-string ffg/quoted-string
                  atext ffg/atext]
     (ff/invalid? (format "%s%s@example.org" quoted-string atext))))
+
+(defspec $quoted-string-dot-$quoted-string-at-example-org-invalid? num-tests
+  (prop/for-all [quoted-string ffg/quoted-string
+                 quoted-string' ffg/quoted-string]
+    (ff/invalid? (format "%s%s@example.org" quoted-string quoted-string'))))
 
 ;;;; domain validation
 
@@ -528,11 +513,6 @@
        (ff/normalize (format "noreply@%s%s%s" cfws fqdn cfws')))))
 
 ;;; IPv4
-
-(defspec normalize-noreply-at-bracket-$ip4-bracket num-tests
-  (prop/for-all [ip ffg/ipv4]
-    (= (format "noreply@[%s]" ip)
-       (ff/normalize (format "noreply@[%s]" ip)))))
 
 (deftest normalize-noreply-at-bracket-$ip4-bracket
   (testing "octets without leading zeros"

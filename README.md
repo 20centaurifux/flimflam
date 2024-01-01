@@ -6,7 +6,7 @@
 
 ## local-part
 
-The locally interpreted string is either a *quoted-string* or a *dot-atom*. If quoted, it may contain whitespace and quoted (control) characters. Obsolete syntax (*obs-local-part*) is not support.
+The locally interpreted string is either a *quoted-string* or a *dot-atom*. If quoted, it may contain whitespace and quoted (control) characters. **flimflam** doesn't support obsolete syntax (*obs-local-part*).
 
 The following strings are valid email addresses:
 

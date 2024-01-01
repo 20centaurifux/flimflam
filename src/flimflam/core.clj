@@ -6,7 +6,7 @@
 
 (def ^:private parser
   (insta/parser
-   "address = local-part '@' domain
+   "address-spec = local-part '@' domain
     FWS = #'[ \t]'+
     CFWS = ((FWS? comment)+ FWS?) | FWS
     comment = '(' (FWS? ccontent)* FWS? ')'
@@ -122,17 +122,22 @@
 
 ;;;; validation
 
-(defn invalid?
-  "Returns true `email` is an invalid email address."
-  [email]
-  (let [result (parse email)]
-    (or (nil? result)
-        (insta/failure? result))))
+(defn- valid-result?
+  [result]
+  (and result
+       (not (insta/failure? result))))
 
 (defn valid?
   "Returns true if `email` is a valid email address."
   [email]
-  (not (invalid? email)))
+  (-> email
+      parse
+      valid-result?))
+
+(defn invalid?
+  "Returns true `email` is an invalid email address."
+  [email]
+  (not (valid? email)))
 
 ;;;; normalization
 
@@ -148,8 +153,8 @@
          (subs s (inc r)))))
 
 (defn- local-part->str
-  [& r]
-  (->> r
+  [tokens]
+  (->> tokens
        (insta/transform {:FWS str
                          :CFWS (constantly "")
                          :dot-atom str
@@ -159,6 +164,17 @@
                          :qtext str
                          :quoted-pair #(subs % 1)})
        str/join))
+
+(defn- quote?
+  [s]
+  (or (empty? s)
+      (re-find #"\p{C}|\s|\"|@" s)))
+
+(defn- local-part->quoted-str
+  [& r]
+  (let [s (local-part->str r)]
+    (cond->> s
+      (quote? s) (format "\"%s\""))))
 
 ;;; normalize domain
 
@@ -236,37 +252,12 @@
 
 ;;; normalize addr-spec
 
-(defn- quote?
-  [s]
-  (or (empty? s)
-      (re-find #"\p{C}|\s|\"|@" s)))
-
-(defn- escape-char
-  [c]
-  (let [n (int c)]
-    (if (or (< n 8)
-            (= n 11)
-            (< 13 n 32)
-            (= n 127))
-      (format "\\u%04x" n)
-      (char-escape-string c))))
-
-(defn- escape
-  [s]
-  (if (quote? s)
-    (str \" (str/escape s escape-char) \")
-    s))
-
-(defn- address->str
-  [local-part _ domain]
-  (str (escape local-part) \@ domain))
-
 (defn normalize
-  "Converts `email` to a uniform format."
+  "Converts `email` to a uniform format. Returns nil if format is invalid."
   [email]
-  (when-let [result (parse email)]
-    (when-not (insta/failure? result)
-      (insta/transform {:address address->str
-                        :local-part local-part->str
+  (let [result (parse email)]
+    (when (valid-result? result)
+      (insta/transform {:address-spec str
+                        :local-part local-part->quoted-str
                         :domain domain->str}
                        result))))

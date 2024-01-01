@@ -18,7 +18,7 @@ The following strings are valid email addresses:
 
 ## domain
 
-The *domain* must be a hostname, a list of dot-separated DNS labels (see [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035)) or an IP address. IPv6 addresses with zone index (e.g. fe80::3dd0:7f8e:57b7:34d5%19) are not supported. **flimflam** doesn't test the length of FQDNs.
+The domain must be a hostname, a list of dot-separated DNS labels (see [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035)) or an IP address. IPv6 addresses with zone index (e.g. fe80::3dd0:7f8e:57b7:34d5%19) are not supported. **flimflam** doesn't test the length of FQDNs.
 
 The following strings are valid email addresses:
 
@@ -37,7 +37,7 @@ user=> (require '[flimflam.core :as ff])
 user=> (ff/valid? "john.doe@[IPv6:::]")
 true
 
-user=> (ff/invalid? "   @localhost")
+user=> (ff/invalid? "@localhost")
 true
 ```
 
@@ -47,7 +47,6 @@ true
 
 * removes unneccessary whitespace characters and comments.
 * removes enclosing quotation marks from *local-part* when possible.
-* converts control characters to escape sequences.
 * normalizes IP addresses, hostnames and FQDNs.
 
 Folding white space that occurs inside *quoted-strings* is interpreted as a single space character.
@@ -59,13 +58,16 @@ user=> (ff/normalize "john.doe@[IPv6:0000:0000:0000:0000:0000:0000:7f00:0001]")
 user=> (ff/normalize "john.doe@[IPv6:::127.0.0.1]")
 "john.doe@[IPv6:::7f00:0001]"
 
+user=> (ff/normalize "john.doe@ExAmPlE.ORG.")
+"john.doe@example.org"
+
 user=> (ff/normalize "john.doe@(hello world)example.org")
 "john.doe@example.org"
 
-user=> (ff/normalize "john.doe@ExAmPlE.")
-"john.doe@example"
+user=> (ff/normalize "john.doe   @example.org")
+"john.doe@example.org"
 
-user=> (ff/normalize "\"john.doe\"   @example.org")
+user=> (ff/normalize "\"john\\.doe\"@example.org")
 "john.doe@example.org"
 
 user=> (ff/normalize "\"john\t\r\n   doe\"@example.org")

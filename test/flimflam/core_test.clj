@@ -334,12 +334,12 @@
 
 (defspec normalize-quote-WSP-$alpha-numeric-string-quote-at-example-org num-tests
   (prop/for-all [qtext (gen/not-empty gen/string-alpha-numeric)]
-    (= (format "\" \\t %s\"@example.org" qtext)
+    (= (format "\" \t %s\"@example.org" qtext)
        (ff/normalize (format "\" \t %s\"@example.org" qtext)))))
 
 (defspec normalize-quote-$alpha-numeric-string-WSP-quote-at-example-org num-tests
   (prop/for-all [qtext (gen/not-empty gen/string-alpha-numeric)]
-    (= (format "\"%s \\t \"@example.org" qtext)
+    (= (format "\"%s \t \"@example.org" qtext)
        (ff/normalize (format "\"%s \t \"@example.org" qtext)))))
 
 (def ^:private visible-char
@@ -353,72 +353,49 @@
        (ff/normalize (format "\"\\%s\"@example.org" c)))))
 
 (defspec normalize-quote-WSP-$quoted-visible-char-quote-at-example-org num-tests
-  (prop/for-all [c gen/char-alpha-numeric]
-    (= (format "\" \\t %s\"@example.org" c)
+  (prop/for-all [c visible-char]
+    (= (format "\" \t %s\"@example.org" c)
        (ff/normalize (format "\" \t \\%s\"@example.org" c)))))
 
 (defspec normalize-quote-$quoted-visible-char-WSP-quote-at-example-org num-tests
-  (prop/for-all [c gen/char-alpha-numeric]
-    (= (format "\"%s \\t \"@example.org" c)
+  (prop/for-all [c visible-char]
+    (= (format "\"%s \t \"@example.org" c)
        (ff/normalize (format "\"\\%s \t \"@example.org" c)))))
 
 (deftest normalize-quoted-$quoted-special-visible-char-at-example-org
   (testing "normalize-quote-$quoted-special-char-quote-at-example-org"
     (is (= "\"@\"@example.org"
            (ff/normalize "\"\\@\"@example.org")))
-    (is (= "\"\\\"\"@example.org"
+    (is (= "\"\"\"@example.org"
            (ff/normalize "\"\\\"\"@example.org"))))
   (testing "normalize-quote-WSP-$quoted-special-char-quote-at-example-org"
-    (is (= "\" \\t @\"@example.org"
+    (is (= "\" \t @\"@example.org"
            (ff/normalize "\" \t \\@\"@example.org")))
-    (is (= "\" \\t \\\"\"@example.org"
+    (is (= "\" \t \"\"@example.org"
            (ff/normalize "\" \t \\\"\"@example.org"))))
   (testing "normalize-quote-$quoted-special-char-WSP-quote-at-example-org"
-    (is (= "\"@ \\t \"@example.org"
+    (is (= "\"@ \t \"@example.org"
            (ff/normalize "\"\\@ \t \"@example.org")))
-    (is (= "\"\\\" \\t \"@example.org"
+    (is (= "\"\" \t \"@example.org"
            (ff/normalize "\"\\\" \t \"@example.org")))))
 
-(def ^:private char-escape-ctrl-char (gen/elements [\backspace
-                                                    \tab
-                                                    \newline
-                                                    \formfeed
-                                                    \return]))
-
-(defspec normalize-quote-$quoted-char-escape-ctrl-char num-tests
-  (prop/for-all [c char-escape-ctrl-char]
-    (= (format "\"%s\"@example.org" (char-escape-string c))
-       (ff/normalize (format "\"\\%s\"@example.org" c)))))
-
-(defspec normalize-quote-WSP-$quoted-char-escape-ctrl-char num-tests
-  (prop/for-all [c char-escape-ctrl-char]
-    (= (format "\" \\t %s\"@example.org" (char-escape-string c))
-       (ff/normalize (format "\" \t \\%s\"@example.org" c)))))
-
-(defspec normalize-quote-$quoted-char-escape-ctrl-char num-tests
-  (prop/for-all [c char-escape-ctrl-char]
-    (= (format "\"%s \\t \"@example.org" (char-escape-string c))
-       (ff/normalize (format "\"\\%s \t \"@example.org" c)))))
-
-(def ^:private hex-escape-ctrl-char
-  (gen/fmap char (gen/one-of [(gen/choose 0 7)
-                              (gen/return 11)
-                              (gen/choose 14 31)
+(def ^:private ctrl-char
+  (gen/fmap char (gen/one-of [(gen/choose 0 31)
                               (gen/return 127)])))
 
-(defspec normalize-quote-$quoted-hex-escape-ctrl-char-quote-at-example-org num-tests
-  (prop/for-all [c hex-escape-ctrl-char]
-    (= (format "\"\\u%04x\"@example.org" (int c))
+(defspec normalize-quote-$quoted-ctrl-char num-tests
+  (prop/for-all [c ctrl-char]
+    (= (format "\"%s\"@example.org" c)
        (ff/normalize (format "\"\\%s\"@example.org" c)))))
 
-(defspec normalize-quote-WSP-$quoted-hex-escape-ctrl-char-quote-at-example-org num-tests
-  (prop/for-all [c hex-escape-ctrl-char]
-    (= (format "\" \\t \\u%04x\"@example.org" (int c))
+(defspec normalize-quote-WSP-$quoted-ctrl-char num-tests
+  (prop/for-all [c ctrl-char]
+    (= (format "\" \t %s\"@example.org" c)
        (ff/normalize (format "\" \t \\%s\"@example.org" c)))))
 
-(defspec normalize-quote-$quoted-hex-escape-ctrl-char-WSP-quote-at-example-org num-tests
-  (prop/for-all [c hex-escape-ctrl-char]
-    (= (format "\"\\u%04x \\t \"@example.org" (int c))
+(defspec normalize-quote-$quoted-ctrl-char num-tests
+  (prop/for-all [c ctrl-char]
+    (= (format "\"%s \t \"@example.org" c)
        (ff/normalize (format "\"\\%s \t \"@example.org" c)))))
 
 (defspec normalize-CRLF-WSP-$quoted-string-at-example-org num-tests

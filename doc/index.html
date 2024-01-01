@@ -2873,7 +2873,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private parser
   (insta/parser
-   &quot;address = local-part '@' domain
+   &quot;address-spec = local-part '@' domain
     FWS = #'[ \t]'+
     CFWS = ((FWS? comment)+ FWS?) | FWS
     comment = '(' (FWS? ccontent)* FWS? ')'
@@ -2983,15 +2983,19 @@ net.brehaut.ClojureTools = (function (SH) {
           unfold
           trim-addr-spec-parts
           parser))</pre></td></tr><tr><td class="docs"><p>validation</p>
-</td><td class="codes"></td></tr><tr><td class="docs"><p>Returns true <code>email</code> is an invalid email address.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn invalid?
-  [email]
-  (let [result (parse email)]
-    (or (nil? result)
-        (insta/failure? result))))</pre></td></tr><tr><td class="docs"><p>Returns true if <code>email</code> is a valid email address.</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- valid-result?
+  [result]
+  (and result
+       (not (insta/failure? result))))</pre></td></tr><tr><td class="docs"><p>Returns true if <code>email</code> is a valid email address.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
   [email]
-  (not (invalid? email)))</pre></td></tr><tr><td class="docs"><p>normalization</p>
+  (-&gt; email
+      parse
+      valid-result?))</pre></td></tr><tr><td class="docs"><p>Returns true <code>email</code> is an invalid email address.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn invalid?
+  [email]
+  (not (valid? email)))</pre></td></tr><tr><td class="docs"><p>normalization</p>
 </td><td class="codes"></td></tr><tr><td class="docs"><p>normalize local-part</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- unquote-string
@@ -3003,8 +3007,8 @@ net.brehaut.ClojureTools = (function (SH) {
          (subs s (inc l) r)
          (subs s (inc r)))))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- local-part-&gt;str
-  [&amp; r]
-  (-&gt;&gt; r
+  [tokens]
+  (-&gt;&gt; tokens
        (insta/transform {:FWS str
                          :CFWS (constantly )
                          :dot-atom str
@@ -3013,7 +3017,16 @@ net.brehaut.ClojureTools = (function (SH) {
                          :qcontent str
                          :qtext str
                          :quoted-pair #(subs % 1)})
-       str/join))</pre></td></tr><tr><td class="docs"><p>normalize domain</p>
+       str/join))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- quote?
+  [s]
+  (or (empty? s)
+      (re-find #&quot;\p{C}|\s|\&quot;|@&quot; s)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- local-part-&gt;quoted-str
+  [&amp; r]
+  (let [s (local-part-&gt;str r)]
+    (cond-&gt;&gt; s
+      (quote? s) (format &quot;\&quot;%s\))))</pre></td></tr><tr><td class="docs"><p>normalize domain</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- fqdn-&gt;str
   [&amp; r]
@@ -3078,34 +3091,13 @@ net.brehaut.ClojureTools = (function (SH) {
                          :octet parse-long
                          :hextet hextet-&gt;bytes})
        str/join))</pre></td></tr><tr><td class="docs"><p>normalize addr-spec</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- quote?
-  [s]
-  (or (empty? s)
-      (re-find #&quot;\p{C}|\s|\&quot;|@&quot; s)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- escape-char
-  [c]
-  (let [n (int c)]
-    (if (or (&lt; n 8)
-            (= n 11)
-            (&lt; 13 n 32)
-            (= n 127))
-      (format &quot;\\u%04x&quot; n)
-      (char-escape-string c))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- escape
-  [s]
-  (if (quote? s)
-    (str \&quot; (str/escape s escape-char) \&quot;)
-    s))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn- address-&gt;str
-  [local-part _ domain]
-  (str (escape local-part) \@ domain))</pre></td></tr><tr><td class="docs"><p>Converts <code>email</code> to a uniform format.</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Converts <code>email</code> to a uniform format. Returns nil if format is invalid.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn normalize
   [email]
-  (when-let [result (parse email)]
-    (when-not (insta/failure? result)
-      (insta/transform {:address address-&gt;str
-                        :local-part local-part-&gt;str
+  (let [result (parse email)]
+    (when (valid-result? result)
+      (insta/transform {:address-spec str
+                        :local-part local-part-&gt;quoted-str
                         :domain domain-&gt;str}
                        result))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_flimflam.core">flimflam.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();

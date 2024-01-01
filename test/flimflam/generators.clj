@@ -64,9 +64,7 @@
                        ipv6-xxxxs-octets
                        (gen/return "::")]))
 
-(def FWS (gen/bind (gen/elements ["([\t ]*\r\n)?[\t ]+"
-                                  "[\t ]+(\r\n[\t ]+)*"])
-                   sg/string-generator))
+(def FWS (sg/string-generator "([\t ]*\r\n)?[\t ]+"))
 
 (def FWS-optional (gen/one-of [FWS (gen/return "")]))
 
@@ -125,11 +123,7 @@
                     (gen/vector (gen/tuple (gen/return ".") atext) 0 5)))
 
 (def qtext (strconcat
-            (gen/vector (gen/one-of [(choose-char 0x0001 0x0008)
-                                     (choose-char 0x000b 0x000c)
-                                     (choose-char 0x000e 0x001f)
-                                     (choose-char 0x007f)
-                                     (choose-char \!)
+            (gen/vector (gen/one-of [(choose-char \!)
                                      (choose-char \# \[)
                                      (choose-char \] \~)])
                         1
@@ -143,14 +137,3 @@
                                 5)
                     FWS-optional
                     (gen/return \")))
-
-(def word (strconcat
-           (gen/one-of [(gen/tuple quoted-string)
-                        (gen/tuple atext)
-                        (gen/tuple CFWS atext)
-                        (gen/tuple atext CFWS)
-                        (gen/tuple CFWS atext CFWS)])))
-
-(def obs-local-part (strconcat
-                     word
-                     (gen/vector (gen/tuple (gen/return ".") word) 1 5)))

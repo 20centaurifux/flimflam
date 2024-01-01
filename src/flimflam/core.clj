@@ -12,13 +12,11 @@
     comment = '(' (FWS? ccontent)* FWS? ')'
     ccontent = ctext | quoted-pair | comment
     ctext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021-\\u0027\\u002a-\\u005b\\u005d-\\u007f]+'
-    local-part = quoted-string | obs-local-part
+    local-part = quoted-string | dot-atom
     quoted-string = CFWS? '\"' (FWS? qcontent)* FWS? '\"' CFWS?
     qcontent = qtext | quoted-pair
-    qtext = #'[\\u0001-\\u0008\\u000b\\u000c\\u000e-\\u001f\\u0021\\u0023-\\u005b\\u005d-\\u007f]+'
-    obs-local-part = word ('.' word)*
-    word = atom | quoted-string
-    atom = CFWS? atext CFWS?
+    qtext = #'[\\u0021\\u0023-\\u005b\\u005d-\\u007e]+'
+    dot-atom = CFWS? atext ('.' atext)* CFWS?
     atext = #'[\\u0021\\u0023-\\u0027\\u002a\\u002b\\u002d\\u002f-\\u0039\\u003d\\u003f\\u0041-\\u005a\\u005e-\\u007e]+'
     quoted-pair = #'\\u005c([\\u0000-\\u007f])'
     domain = CFWS? (hostname | fqdn | ip) CFWS?
@@ -107,7 +105,7 @@
 
 (defn- unfold
   [s]
-  (str/replace s #"\r\n\s+" " "))
+  (str/replace s #"\s*\r\n\s+" " "))
 
 (defn- trim-addr-spec-parts
   [email]
@@ -152,12 +150,9 @@
 (defn- local-part->str
   [& r]
   (->> r
-       (insta/transform {:obs-local-part str
-                         :FWS str
-                         :CFWS str
-                         :comment (constantly "")
-                         :word str
-                         :atom str
+       (insta/transform {:FWS str
+                         :CFWS (constantly "")
+                         :dot-atom str
                          :atext str
                          :quoted-string unquote-string
                          :qcontent str

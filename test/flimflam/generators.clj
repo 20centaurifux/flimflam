@@ -1,4 +1,5 @@
 (ns flimflam.generators
+  (:refer-clojure :exclude [comment])
   (:require [clojure.string :as str]
             [clojure.test.check.generators :as gen]
             [miner.strgen :as sg]))

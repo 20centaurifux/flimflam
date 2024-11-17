@@ -18,7 +18,7 @@ The following strings are valid email addresses:
 
 ## domain
 
-The domain must be a hostname, a list of dot-separated (DNS) labels (see [RFC 952](https://www.rfc-editor.org/rfc/rfc952), [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035) and [RFC 1123](https://www.rfc-editor.org/rfc/rfc1123)) or an IP address. Labels must not consist of all numeric values. **flimflam** doesn't test the length of FQDNs. IPv6 addresses with zone index (e.g. fe80::3dd0:7f8e:57b7:34d5%19) are not supported.
+The domain must be a hostname, a list of dot-separated (DNS) labels (see [RFC 952](https://www.rfc-editor.org/rfc/rfc952), [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035) and [RFC 1123](https://www.rfc-editor.org/rfc/rfc1123)) or an IP address. Labels must not consist of all numeric values. IPv6 addresses with zone index (e.g. fe80::3dd0:7f8e:57b7:34d5%19) are not supported.
 
 The following strings are valid email addresses:
 

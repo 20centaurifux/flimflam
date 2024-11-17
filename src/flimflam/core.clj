@@ -24,8 +24,8 @@
     hostname = label
     fqdn = (label '.')+ label?
     label = label1035 | label1123
-    label1035 = #'(?i)(?=.{1,63})[a-z]([a-z0-9-]*[a-z0-9])?'
-    label1123 = #'(?i)(?=.{1,63})[0-9]+([a-z]+([a-z0-9-]*[a-z0-9])?|-[a-z0-9-]*[a-z0-9])'
+    label1035 = #'(?i)[a-z]([a-z0-9-]*[a-z0-9])?'
+    label1123 = #'(?i)[0-9]+([a-z]+([a-z0-9-]*[a-z0-9])?|-[a-z0-9-]*[a-z0-9])'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
     v680 = hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet
@@ -123,6 +123,29 @@
           trim-addr-spec-parts
           parser))
 
+;;;; domain name validation
+
+(defn ->nodes
+  [tree]
+  (filter vector? (tree-seq vector? seq tree)))
+
+(defn- domain-name-labels
+  [result]
+  (into []
+        (comp (filter (fn [[k _]]
+                        (k #{:label1035 :label1123})))
+              (map second))
+        (->nodes result)))
+
+(defn- domain-name-valid?
+  [result]
+  (let [labels (domain-name-labels result)
+        fqdn (str/join "." labels)]
+    (or (empty? labels)
+        (and (>= 127 (count labels))
+             (every? #(>= 63 (count %)) labels)
+             (>= 255 (count fqdn))))))
+
 ;;;; validation
 
 (defn- valid-result?
@@ -133,9 +156,9 @@
 (defn valid?
   "Returns true if `email` is a valid email address."
   [email]
-  (-> email
-      parse
-      valid-result?))
+  (let [result (parse email)]
+    (and (valid-result? result)
+         (domain-name-valid? result))))
 
 (defn invalid?
   "Returns true `email` is an invalid email address."

@@ -123,7 +123,9 @@
           trim-addr-spec-parts
           parser))
 
-;;;; domain name validation
+;;;; validation
+
+;;; validate domain name
 
 (defn ->nodes
   [tree]
@@ -146,7 +148,7 @@
              (every? #(>= 63 (count %)) labels)
              (>= 255 (count fqdn))))))
 
-;;;; validation
+;;; validate email address
 
 (defn- valid-result?
   [result]

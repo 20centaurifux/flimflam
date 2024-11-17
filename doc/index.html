@@ -2985,7 +2985,8 @@ net.brehaut.ClojureTools = (function (SH) {
   (some-&gt; email
           unfold
           trim-addr-spec-parts
-          parser))</pre></td></tr><tr><td class="docs"><p>domain name validation</p>
+          parser))</pre></td></tr><tr><td class="docs"><p>validation</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>validate domain name</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn -&gt;nodes
   [tree]
@@ -3004,7 +3005,7 @@ net.brehaut.ClojureTools = (function (SH) {
     (or (empty? labels)
         (and (&gt;= 127 (count labels))
              (every? #(&gt;= 63 (count %)) labels)
-             (&gt;= 255 (count fqdn))))))</pre></td></tr><tr><td class="docs"><p>validation</p>
+             (&gt;= 255 (count fqdn))))))</pre></td></tr><tr><td class="docs"><p>validate email address</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- valid-result?
   [result]

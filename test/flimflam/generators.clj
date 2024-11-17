@@ -130,11 +130,9 @@
                         1
                         20)))
 
-(def quoted-string (strconcat
-                    (gen/return \")
-                    (gen/vector (gen/tuple FWS-optional
-                                           (gen/one-of [qtext quoted-pair]))
-                                0
-                                5)
-                    FWS-optional
-                    (gen/return \")))
+(def quoted-string
+  (strconcat
+   (gen/return \")
+   (gen/vector (gen/tuple FWS-optional (gen/one-of [qtext quoted-pair])) 0 5)
+   FWS-optional
+   (gen/return \")))

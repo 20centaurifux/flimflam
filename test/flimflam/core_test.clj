@@ -110,9 +110,9 @@
   (prop/for-all [dns-label ffg/dns-label]
     (ff/invalid? (format "noreply@-%s" dns-label))))
 
-(defspec noreply-at-digit-$dns-label-invalid? num-tests
+(defspec noreply-at-digit-$dns-label-valid? num-tests
   (prop/for-all [dns-label ffg/dns-label]
-    (ff/invalid? (format "noreply@1%s" dns-label))))
+    (ff/valid? (format "noreply@1%s" dns-label))))
 
 (defspec noreply-at-$dns-label-hyphen-invalid? num-tests
   (prop/for-all [dns-label ffg/dns-label]

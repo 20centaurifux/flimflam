@@ -1,6 +1,7 @@
 (ns flimflam.core
   (:require [clojure.string :as str]
-            [instaparse.core :as insta]))
+            [instaparse.core :as insta]
+            [instaparse.transform :as trans]))
 
 ;;;;  parser
 
@@ -22,7 +23,9 @@
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
     fqdn = (label '.')+ label?
-    label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
+    label = label1035 | label1123
+    label1035 = #'(?i)(?=.{1,63})[a-z]([a-z0-9-]*[a-z0-9])?'
+    label1123 = #'(?i)(?=.{1,63})[0-9]+([a-z]+([a-z0-9-]*[a-z0-9])?|-[a-z0-9-]*[a-z0-9])'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
     v680 = hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet
@@ -155,7 +158,7 @@
 (defn- local-part->str
   [tokens]
   (->> tokens
-       (insta/transform {:FWS str
+       (trans/transform {:FWS str
                          :CFWS (constantly "")
                          :dot-atom str
                          :atext str
@@ -238,11 +241,13 @@
 (defn- domain->str
   [& r]
   (->> r
-       (insta/transform {:CFWS (constantly "")
+       (trans/transform {:CFWS (constantly "")
                          :FWS (constantly "")
                          :hostname str
                          :fqdn fqdn->str
                          :label str/lower-case
+                         :label1035 str/lower-case
+                         :label1123 str/lower-case
                          :ip str
                          :v4 str
                          :v6 ipv6->str
@@ -257,7 +262,7 @@
   [email]
   (let [result (parse email)]
     (when (valid-result? result)
-      (insta/transform {:address-spec str
+      (trans/transform {:address-spec str
                         :local-part local-part->quoted-str
                         :domain domain->str}
                        result))))

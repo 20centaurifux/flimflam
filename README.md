@@ -1,8 +1,14 @@
+
 # flimflam
 
 ## Description
 
 **flimflam** is an email address validation library written in Clojure. It tests if a given email address conforms to the *addr-spec* specification as described in [RFC 5322](https://www.rfc-editor.org/rfc/rfc5322#section-3.4.1).
+
+You can install **flimflam** from Clojars.
+
+[![Clojars Project](https://img.shields.io/clojars/v/de.dixieflatline/flimflam.svg?include_prereleases)](https://clojars.org/de.dixieflatline/flimflam)
+
 
 ## local-part
 

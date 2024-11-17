@@ -9,6 +9,6 @@
   :profiles {:uberjar {:aot :all}
              :test {:dependencies [[org.clojure/test.check "1.1.1"]
                                    [com.velisco/strgen "0.2.5"]]}}
-  :plugins [[lein-marginalia "0.9.1"]
-            [dev.weavejester/lein-cljfmt "0.12.0"]]
+  :plugins [[lein-marginalia "0.9.2"]
+            [dev.weavejester/lein-cljfmt "0.13.0"]]
   :cljfmt {:load-config-file? true})

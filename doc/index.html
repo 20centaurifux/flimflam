@@ -2869,7 +2869,8 @@ net.brehaut.ClojureTools = (function (SH) {
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.11.1</td></tr><tr><td class="dep-name">instaparse</td><td class="dotted"><hr /></td><td class="dep-version">1.4.12</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#flimflam.core">flimflam.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#flimflam.core" name="flimflam.core"><h1 class="project-name">flimflam.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns flimflam.core
   (:require [clojure.string :as str]
-            [instaparse.core :as insta]))</pre></td></tr><tr><td class="docs"><p> parser</p>
+            [instaparse.core :as insta]
+            [instaparse.transform :as trans]))</pre></td></tr><tr><td class="docs"><p> parser</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(def ^:private parser
   (insta/parser
@@ -2889,7 +2890,9 @@ net.brehaut.ClojureTools = (function (SH) {
     domain = CFWS? (hostname | fqdn | ip) CFWS?
     hostname = label
     fqdn = (label '.')+ label?
-    label = #'(?i)[a-z]([a-z0-9-]{0,61}[a-z0-9])?'
+    label = label1035 | label1123
+    label1035 = #'(?i)[a-z]([a-z0-9-]*[a-z0-9])?'
+    label1123 = #'(?i)[0-9]+([a-z]+([a-z0-9-]*[a-z0-9])?|-[a-z0-9-]*[a-z0-9])'
     ip = '[' FWS? (v4 | 'IPv6:' v6) FWS? ']'
     v4 = octet '.' octet '.' octet '.' octet
     v680 = hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet ':' hextet
@@ -2982,7 +2985,26 @@ net.brehaut.ClojureTools = (function (SH) {
   (some-&gt; email
           unfold
           trim-addr-spec-parts
-          parser))</pre></td></tr><tr><td class="docs"><p>validation</p>
+          parser))</pre></td></tr><tr><td class="docs"><p>domain name validation</p>
+</td><td class="codes"></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn -&gt;nodes
+  [tree]
+  (filter vector? (tree-seq vector? seq tree)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- domain-name-labels
+  [result]
+  (into []
+        (comp (filter (fn [[k _]]
+                        (k #{:label1035 :label1123})))
+              (map second))
+        (-&gt;nodes result)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn- domain-name-valid?
+  [result]
+  (let [labels (domain-name-labels result)
+        fqdn (str/join &quot;.&quot; labels)]
+    (or (empty? labels)
+        (and (&gt;= 127 (count labels))
+             (every? #(&gt;= 63 (count %)) labels)
+             (&gt;= 255 (count fqdn))))))</pre></td></tr><tr><td class="docs"><p>validation</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn- valid-result?
   [result]
@@ -2990,9 +3012,9 @@ net.brehaut.ClojureTools = (function (SH) {
        (not (insta/failure? result))))</pre></td></tr><tr><td class="docs"><p>Returns true if <code>email</code> is a valid email address.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn valid?
   [email]
-  (-&gt; email
-      parse
-      valid-result?))</pre></td></tr><tr><td class="docs"><p>Returns true <code>email</code> is an invalid email address.</p>
+  (let [result (parse email)]
+    (and (valid-result? result)
+         (domain-name-valid? result))))</pre></td></tr><tr><td class="docs"><p>Returns true <code>email</code> is an invalid email address.</p>
 </td><td class="codes"><pre class="brush: clojure">(defn invalid?
   [email]
   (not (valid? email)))</pre></td></tr><tr><td class="docs"><p>normalization</p>
@@ -3009,7 +3031,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn- local-part-&gt;str
   [tokens]
   (-&gt;&gt; tokens
-       (insta/transform {:FWS str
+       (trans/transform {:FWS str
                          :CFWS (constantly )
                          :dot-atom str
                          :atext str
@@ -3080,11 +3102,13 @@ net.brehaut.ClojureTools = (function (SH) {
 </td><td class="codes"><pre class="brush: clojure">(defn- domain-&gt;str
   [&amp; r]
   (-&gt;&gt; r
-       (insta/transform {:CFWS (constantly )
+       (trans/transform {:CFWS (constantly )
                          :FWS (constantly )
                          :hostname str
                          :fqdn fqdn-&gt;str
                          :label str/lower-case
+                         :label1035 str/lower-case
+                         :label1123 str/lower-case
                          :ip str
                          :v4 str
                          :v6 ipv6-&gt;str
@@ -3096,10 +3120,10 @@ net.brehaut.ClojureTools = (function (SH) {
   [email]
   (let [result (parse email)]
     (when (valid-result? result)
-      (insta/transform {:address-spec str
+      (trans/transform {:address-spec str
                         :local-part local-part-&gt;quoted-str
                         :domain domain-&gt;str}
-                       result))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_flimflam.core">flimflam.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+                       result))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/clj-commons/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_flimflam.core">flimflam.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
